@@ -10,31 +10,41 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/Uliwazeer/Graduation-Project.git'
             }
         }
+
         stage('Build Docker Image') {
             steps {
-                // استخدم sudo للوصول للـ Docker daemon
                 sh 'sudo docker build -t vprofile-app:latest ./tom-app'
             }
         }
+
         stage('Login to ECR') {
-            steps {
-                sh 'aws ecr get-login-password --region ${AWS_REGION} | sudo docker login --username AWS --password-stdin ${ECR_REPO}'
+            // استخدم credentials المخزنة في Jenkins
+            withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials-id']]) {
+                steps {
+                    sh '''
+                        aws ecr get-login-password --region $AWS_REGION | sudo docker login --username AWS --password-stdin $ECR_REPO
+                    '''
+                }
             }
         }
+
         stage('Push Image To ECR') {
             steps {
-                sh 'sudo docker tag vprofile-app:latest ${ECR_REPO}:${BUILD_NUMBER}'
-                sh 'sudo docker push ${ECR_REPO}:${BUILD_NUMBER}'
+                sh '''
+                    sudo docker tag vprofile-app:latest $ECR_REPO:${BUILD_NUMBER}
+                    sudo docker push $ECR_REPO:${BUILD_NUMBER}
+                '''
             }
         }
+
         stage('Update GitOps Repo') {
             steps {
                 sh '''
-                git clone https://github.com/Uliwazeer/gitops-vprofile.git
-                cd gitops-vprofile
-                sed -i "s|image: .*|image: ${ECR_REPO}:${BUILD_NUMBER}|g" deployment.yaml
-                git commit -am "update image tag to ${BUILD_NUMBER}"
-                git push
+                    git clone https://github.com/Uliwazeer/gitops-vprofile.git
+                    cd gitops-vprofile
+                    sed -i "s|image: .*|image: $ECR_REPO:${BUILD_NUMBER}|g" deployment.yaml
+                    git commit -am "update image tag to ${BUILD_NUMBER}"
+                    git push
                 '''
             }
         }
