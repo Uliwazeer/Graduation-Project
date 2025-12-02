@@ -11,6 +11,16 @@ pipeline {
             }
         }
 
+        stage('Clean Old Docker Images') {
+            steps {
+                sh '''
+                    # حذف الصور غير المستخدمة لتوفير مساحة
+                    sudo docker image prune -af
+                    sudo docker container prune -f
+                '''
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 sh 'sudo docker build -t vprofile-app:latest ./tom-app'
@@ -18,10 +28,10 @@ pipeline {
         }
 
         stage('Login to ECR') {
-            // استخدم credentials المخزنة في Jenkins
-            withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials-id']]) {
-                steps {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials-id']]) {
                     sh '''
+                        # non-interactive login
                         aws ecr get-login-password --region $AWS_REGION | sudo docker login --username AWS --password-stdin $ECR_REPO
                     '''
                 }
