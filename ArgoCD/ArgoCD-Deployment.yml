@@ -17,3 +17,5 @@ spec:
         image: 708254703418.dkr.ecr.us-east-2.amazonaws.com/app-vprofile:latest
         ports:
         - containerPort: 8080
+      imagePullSecrets:
+      - name: ecr-secret
