@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vprofile-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vprofile-app
+  template:
+    metadata:
+      labels:
+        app: vprofile-app
+    spec:
+      containers:
+      - name: vprofile-app
+        image: 708254703418.dkr.ecr.us-east-2.amazonaws.com/app-vprofile:latest
+        ports:
+        - containerPort: 8080
