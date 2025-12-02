@@ -6,18 +6,25 @@ pipeline {
     }
     stages {
         stage('Checkout Code') {
-            steps { git branch: 'main', url: 'https://github.com/Uliwazeer/Graduation-Project.git' }
+            steps {
+                git branch: 'main', url: 'https://github.com/Uliwazeer/Graduation-Project.git'
+            }
         }
         stage('Build Docker Image') {
-            steps { sh 'docker build -t vprofile-app:latest ./tom-app' }
+            steps {
+                // استخدم sudo للوصول للـ Docker daemon
+                sh 'sudo docker build -t vprofile-app:latest ./tom-app'
+            }
         }
         stage('Login to ECR') {
-            steps { sh 'aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REPO}' }
+            steps {
+                sh 'aws ecr get-login-password --region ${AWS_REGION} | sudo docker login --username AWS --password-stdin ${ECR_REPO}'
+            }
         }
         stage('Push Image To ECR') {
             steps {
-                sh 'docker tag vprofile-app:latest ${ECR_REPO}:${BUILD_NUMBER}'
-                sh 'docker push ${ECR_REPO}:${BUILD_NUMBER}'
+                sh 'sudo docker tag vprofile-app:latest ${ECR_REPO}:${BUILD_NUMBER}'
+                sh 'sudo docker push ${ECR_REPO}:${BUILD_NUMBER}'
             }
         }
         stage('Update GitOps Repo') {
