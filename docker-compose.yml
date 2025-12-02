@@ -1,0 +1,61 @@
+version: '3.8'
+services:
+  nginx:
+    build: ./nginx
+    image: nginx-vp-app
+    container_name: web
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - vp-app-network
+    depends_on:
+      - app01
+  app01:
+    build: ./tom-app
+    image: tomcat-vp-app
+    container_name: app01
+    ports:
+      - "8080:8080"
+    networks:
+      - vp-app-network
+    depends_on:
+      - db01
+      - mc01
+      - rmq01
+  db01:
+    build: ./db
+    image: mysql-vp-app
+    container_name: db01
+    ports:
+      - "3306:3306"
+    networks:
+      - vp-app-network
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=admin123
+      - MYSQL_USER=admin
+      - MYSQL_DATABASE=accounts
+  mc01:
+    image: memcached
+    container_name: mc01
+    ports:
+      - "11211:11211"
+    networks:
+      - vp-app-network
+  rmq01:
+    image: rabbitmq
+    container_name: rmq01
+    ports:
+      - "5672:5672"
+    networks:
+      - vp-app-network
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+networks:
+  vp-app-network:
+    driver: bridge
+volumes:
+  db_data:
