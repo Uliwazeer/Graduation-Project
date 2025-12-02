@@ -7,16 +7,16 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/Uliwazeer/Graduation-Project.git'
+                git branch: 'main', url: 'https://github.com/Uliwazeer/Graduation-Project.git', credentialsId: 'github-token'
             }
         }
 
-        stage('Clean Old Docker Images') {
+        stage('Clean Old Docker Images & Containers') {
             steps {
                 sh '''
-                    # حذف الصور غير المستخدمة لتوفير مساحة
-                    sudo docker image prune -af
+                    echo "Removing old Docker images and containers..."
                     sudo docker container prune -f
+                    sudo docker image prune -af
                 '''
             }
         }
@@ -27,11 +27,11 @@ pipeline {
             }
         }
 
-        stage('Login to ECR') {
+        stage('Login to AWS ECR') {
             steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials-id']]) {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-key']]) {
                     sh '''
-                        # non-interactive login
+                        echo "Logging into AWS ECR..."
                         aws ecr get-login-password --region $AWS_REGION | sudo docker login --username AWS --password-stdin $ECR_REPO
                     '''
                 }
@@ -41,6 +41,7 @@ pipeline {
         stage('Push Image To ECR') {
             steps {
                 sh '''
+                    echo "Tagging and pushing Docker image to ECR..."
                     sudo docker tag vprofile-app:latest $ECR_REPO:${BUILD_NUMBER}
                     sudo docker push $ECR_REPO:${BUILD_NUMBER}
                 '''
@@ -49,13 +50,16 @@ pipeline {
 
         stage('Update GitOps Repo') {
             steps {
-                sh '''
-                    git clone https://github.com/Uliwazeer/gitops-vprofile.git
-                    cd gitops-vprofile
-                    sed -i "s|image: .*|image: $ECR_REPO:${BUILD_NUMBER}|g" deployment.yaml
-                    git commit -am "update image tag to ${BUILD_NUMBER}"
-                    git push
-                '''
+                withCredentials([usernamePassword(credentialsId: 'github-token', passwordVariable: 'GITHUB_PASS', usernameVariable: 'GITHUB_USER')]) {
+                    sh '''
+                        echo "Updating GitOps repository..."
+                        git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/Uliwazeer/gitops-vprofile.git
+                        cd gitops-vprofile
+                        sed -i "s|image: .*|image: $ECR_REPO:${BUILD_NUMBER}|g" deployment.yaml
+                        git commit -am "Update image tag to ${BUILD_NUMBER}"
+                        git push
+                    '''
+                }
             }
         }
     }
