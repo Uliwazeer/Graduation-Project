@@ -3,7 +3,7 @@
 ## Project Overview
 
 This project demonstrates a **complete DevOps and GitOps workflow** by provisioning a **5-tier VProfile application stack** on a **3-node Kubernetes cluster**. The project emphasizes:
-<img width="1024" height="1024" alt="Gemini_Generated_Image_2dw8ll2dw8ll2dw8" src="https://github.com/user-attachments/assets/bb4a2bd7-0202-4859-a606-70f4fd5e0711" />
+<img width="1024" height="857" alt="Gemini_Generated_Image_2dw8ll2dw8ll2dw8" src="https://github.com/user-attachments/assets/7c1650b2-3681-47ad-950b-97193f4cd5da" />
 
 - **Infrastructure as Code (IaC)** using Ansible and Vagrant  
 - **Continuous Integration (CI)** using Jenkins  
