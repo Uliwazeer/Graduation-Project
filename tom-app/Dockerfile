@@ -1,7 +1,7 @@
 FROM maven:3.8.4-openjdk-11 AS maven
 WORKDIR /tmp
 COPY application.properties /tmp/application.properties
-RUN git clone -b Vagrant https://github.com/Omarh4700/Workshop.git && \
+RUN git clone https://github.com/Uliwazeer/Project.git && \
     cd Workshop/Vagrant-Manual-Automation/sourcecodeseniorwr && \
     cp /tmp/application.properties ./src/main/resources/application.properties && \
     mvn clean install
