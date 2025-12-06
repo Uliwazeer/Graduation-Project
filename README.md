@@ -1,4 +1,6 @@
 # Graduation Project: VProfile 5-Tier Microservices Application with Jenkins CI & GitOps CD via ArgoCD
+## Project Workflow Diagram 
+![297758864-0bfb78ce-28f4-49c6-b6f3-be300bddc9dc](https://github.com/user-attachments/assets/a85e2348-138c-428f-bff8-2325a422a1ca)
 
 ## Project Overview
 
