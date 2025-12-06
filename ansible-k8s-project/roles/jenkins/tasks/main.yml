@@ -1,0 +1,8 @@
+---
+- name: Ensure helm is installed
+  debug:
+    msg: "Install Helm here"
+
+- name: Deploy Jenkins
+  debug:
+    msg: "Apply Jenkins Deployment/Service"

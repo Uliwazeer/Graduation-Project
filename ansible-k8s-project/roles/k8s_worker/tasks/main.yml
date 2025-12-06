@@ -1,0 +1,12 @@
+---
+# -------------------------
+# Join the node to the cluster
+# -------------------------
+- name: Join the node to the cluster
+  shell: >
+    {{ hostvars['master-k8s']['kubeadm_join_command'] | regex_replace('\\\s*$', '') }}
+    --ignore-preflight-errors=all
+  become: true
+  when: hostvars['master-k8s']['kubeadm_join_command'] is defined
+       and hostvars['master-k8s']['kubeadm_join_command'] != ''
+

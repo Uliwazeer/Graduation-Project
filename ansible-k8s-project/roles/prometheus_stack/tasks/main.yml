@@ -1,0 +1,8 @@
+---
+- name: Add prometheus helm repo
+  debug:
+    msg: "helm repo add prometheus-community"
+
+- name: Install kube-prometheus-stack
+  debug:
+    msg: "helm install prometheus (kube-prometheus-stack)"

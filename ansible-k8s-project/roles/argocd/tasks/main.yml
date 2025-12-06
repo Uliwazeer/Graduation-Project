@@ -1,0 +1,8 @@
+---
+- name: Add ArgoCD helm repo
+  debug:
+    msg: "helm repo add argocd"
+
+- name: Install ArgoCD
+  debug:
+    msg: "helm install argocd"

@@ -1,0 +1,51 @@
+---
+- name: Initialize Kubernetes master
+  command: kubeadm init --pod-network-cidr=10.244.0.0/16
+  register: kubeadm_init
+  args:
+    creates: /etc/kubernetes/admin.conf
+
+- name: Ensure .kube directory exists for ubuntu
+  file:
+    path: /home/ubuntu/.kube
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: Set up kubeconfig for ubuntu
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/ubuntu/.kube/config
+    remote_src: yes
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+
+# -------------------------
+# Wait for Kubernetes API to be ready
+# -------------------------
+- name: Wait for Kubernetes API to be ready
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: 6443
+    delay: 10
+    timeout: 300
+
+# -------------------------
+# Install Flannel CNI
+# -------------------------
+- name: Install Flannel CNI
+  command: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml --validate=false
+  environment:
+    KUBECONFIG: /home/ubuntu/.kube/config
+
+# -------------------------
+# Save kubeadm join command (safe)
+# -------------------------
+- name: Save kubeadm join command
+  set_fact:
+    kubeadm_join_command: >-
+      {{ (kubeadm_init.stdout_lines | select('search', 'kubeadm join') | list | first) | default('') }}
+  when: kubeadm_init is defined
+

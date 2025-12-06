@@ -1,0 +1,71 @@
+---
+- name: Provision EC2 Instances for Kubernetes Cluster
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    key_name: Ohio-key
+    instance_type: t3.medium
+    ami_id: ami-0c5ddb3560e768732  # Ubuntu 22.04 LTS
+    security_group: sg-0d7c7b6f086f289f5
+    region: us-east-2
+    tags:
+      Project: KubernetesCluster
+
+  tasks:
+
+    - name: Launch Master Node
+      amazon.aws.ec2_instance:
+        key_name: "{{ key_name }}"
+        instance_type: "{{ instance_type }}"
+        image_id: "{{ ami_id }}"
+        security_groups:
+          - "{{ security_group }}"
+        subnet_id: subnet-033876d60125aad9f     # us-east-2a
+        region: "{{ region }}"
+        tags:
+          Name: master-k8s
+        count: 1
+        wait: true
+      register: master_node
+
+    - name: Launch Worker Node 1
+      amazon.aws.ec2_instance:
+        key_name: "{{ key_name }}"
+        instance_type: "{{ instance_type }}"
+        image_id: "{{ ami_id }}"
+        security_groups:
+          - "{{ security_group }}"
+        subnet_id: subnet-09731b6fefa0d17fa     # us-east-2b
+        region: "{{ region }}"
+        tags:
+          Name: worker-1
+        count: 1
+        wait: true
+      register: worker_node_1
+
+    # ---------------------------
+    # Inventory Registration
+    # ---------------------------
+
+    - name: Add Master node to inventory
+      ansible.builtin.add_host:
+        hostname: "{{ master_node.instances[0].public_ip_address }}"
+        group: kubernetes_master
+
+    - name: Add Worker node to inventory
+      ansible.builtin.add_host:
+        hostname: "{{ worker_node_1.instances[0].public_ip_address }}"
+        group: kubernetes_workers
+
+    # ---------------------------
+    # Wait for SSH
+    # ---------------------------
+
+    - name: Wait for SSH to be available
+      ansible.builtin.wait_for:
+        host: "{{ item }}"
+        port: 22
+        timeout: 300
+      loop: "{{ groups['kubernetes_master'] + groups['kubernetes_workers'] }}"
+  

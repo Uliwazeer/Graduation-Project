@@ -1,0 +1,98 @@
+---
+# -------------------------
+# Common tasks for all nodes
+# -------------------------
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Disable swap
+  command: swapoff -a
+  ignore_errors: yes
+
+- name: Install dependencies for Kubernetes repo and Docker
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+    state: present
+    update_cache: yes
+
+- name: Install Docker
+  apt:
+    name: docker.io
+    state: present
+
+- name: Enable Docker service
+  systemd:
+    name: docker
+    enabled: true
+    state: started
+
+# -------------------------
+# Remove old Kubernetes GPG key and repo if exists
+# -------------------------
+- name: Remove old Kubernetes GPG key
+  ansible.builtin.apt_key:
+    id: 58118E89F2A9724806A584BE0493B026F3E6C1A6
+    state: absent
+  ignore_errors: true
+
+- name: Remove old Kubernetes repository file
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/kubernetes.list
+    state: absent
+  ignore_errors: true
+
+# -------------------------
+# Add new Kubernetes GPG key (pkgs.k8s.io)
+# -------------------------
+- name: Create keyrings directory for Kubernetes
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Download Kubernetes GPG key
+  ansible.builtin.shell: |
+    curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  args:
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  changed_when: true
+
+# -------------------------
+# Add Kubernetes repository (new)
+# -------------------------
+- name: Add Kubernetes repository
+  ansible.builtin.apt_repository:
+    repo: 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /'
+    state: present
+    filename: kubernetes
+    update_cache: yes
+
+# -------------------------
+# Install Kubernetes packages
+# -------------------------
+- name: Install kubeadm, kubelet, kubectl
+  apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present
+    update_cache: yes
+
+- name: Hold kube packages to prevent automatic upgrades
+  apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present
+    update_cache: yes
+

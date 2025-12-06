@@ -1,0 +1,22 @@
+---
+- hosts: all
+  become: true
+  roles:
+    - k8s_common
+
+- hosts: masters
+  become: true
+  roles:
+    - k8s_master
+
+- hosts: workers
+  become: true
+  roles:
+    - k8s_worker
+
+- hosts: masters
+  become: true
+  roles:
+    - jenkins
+    - argocd
+    - prometheus_stack
